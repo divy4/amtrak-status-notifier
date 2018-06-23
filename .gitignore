@@ -109,3 +109,7 @@ venv.bak/
 
 # amtrak-status-notifier
 amtrakwebscraper.py
+
+# email OAuth keys
+secrets/*
+!secrets/README
