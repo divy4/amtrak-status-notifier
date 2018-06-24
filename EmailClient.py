@@ -17,6 +17,7 @@ class SMTPClient:
         self.__server.ehlo()
         self.__server.starttls()
         self.__server.login(userAddress, userPassword)
+        self.__from = userAddress
 
     ''' Sends an email.
         @param toAddress The email address to send the message to.
@@ -24,4 +25,9 @@ class SMTPClient:
         @param body The text of the message.
     '''
     def sendMessage(self, toAddress, subject, body):
-        pass
+        msg = email.mime.multipart.MIMEMultipart()
+        msg['From'] = self.__from
+        msg['To'] = toAddress
+        msg['Subject'] = subject
+        msg.attach(email.mime.text.MIMEText(body, 'plain'))
+        self.__server.send_message(msg)
