@@ -1,4 +1,8 @@
+import json
+
 import SMTPClient
+
+EMAIL_LOGIN_FILENAME = 'secrets/email_client.json'
 
 
 ''' A class for storing addresses to send notifications to those addresses.
@@ -7,7 +11,12 @@ class Notifier:
     ''' Creates a Notifier.
     '''
     def __init__(self):
-        pass
+        with open(EMAIL_LOGIN_FILENAME, 'r') as f:
+            emailInfo = json.load(f)
+        self.__emailClient = SMTPClient.SMTPClient(emailInfo['serverAddress'],
+                                                   emailInfo['serverPort'],
+                                                   emailInfo['userAddress'],
+                                                   emailInfo['userPassword'])
 
     ''' Notifies an address.
         @param notifType The type of notification the address accepts.
