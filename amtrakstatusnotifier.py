@@ -14,7 +14,7 @@ if __name__ == '__main__':
     delay = int(sys.argv[3])
     adminEmail = sys.argv[4]
     emails = sys.argv[5:]
-
+    # Monitor
     try:
         monitor = StatusMonitor.StatusMonitor()
         monitor.run(trainNumber, station, delay, emails)
