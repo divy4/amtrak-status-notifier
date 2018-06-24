@@ -22,7 +22,9 @@ class StatusMonitor:
             bodyTemplate = f.read()
         # TODO: change loop to stop
         while True:
+            print('Scraping status at {}...'.format(datetime.datetime.now()))
             status = amtrakwebscraper.getStatus(True, trainNumber, stationCode, date)
+            print('Scraping done!')
             # TODO: make function to format head and body
             head = headTemplate
             body = bodyTemplate.format(difference=status['difference'],
@@ -33,8 +35,12 @@ class StatusMonitor:
                                        stationName=stationName,
                                        trainNumber=trainNumber)
             # notify emails!
+            print('Sending emails at {}...'.format(datetime.datetime.now()))
             notifier = Notifier.Notifier()
             for email in emails:
                 notifier.notify('email', email, head, body)
+            print('{} emails sent!'.format(len(emails)))
             # wait for <delay> minutes
+            print('Sleeping for {} minutes...'.format(delay))
             time.sleep(60 * delay)
+            print('Done!')
