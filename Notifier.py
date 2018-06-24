@@ -1,8 +1,10 @@
+import inspect
 import json
 
 import SMTPClient
 
 EMAIL_LOGIN_FILENAME = 'secrets/email_client.json'
+NOTIFIER_METHOD_NAME_PREFIX = '_Notifier__notify'
 
 
 ''' A class for storing addresses to send notifications to those addresses.
@@ -11,6 +13,14 @@ class Notifier:
     ''' Creates a Notifier.
     '''
     def __init__(self):
+        # notify methods
+        allMethods = inspect.getmembers(self, predicate=inspect.ismethod)
+        self.__notifierMethods = {}
+        prefixLen = len(NOTIFIER_METHOD_NAME_PREFIX)
+        for name, method in allMethods:
+            if name[:prefixLen] == NOTIFIER_METHOD_NAME_PREFIX:
+                self.__notifierMethods[name[prefixLen:]] = method
+        # email
         with open(EMAIL_LOGIN_FILENAME, 'r') as f:
             emailInfo = json.load(f)
         self.__emailClient = SMTPClient.SMTPClient(emailInfo['serverAddress'],
@@ -25,7 +35,7 @@ class Notifier:
         @param body The body of the notification.
     '''
     def notify(self, notifType, address, head, body):
-        pass
+        self.__notifierMethods[notifType](address, head, body)
 
     ''' ##### Helper functions:
         These functions are called by notify() to send notifications
