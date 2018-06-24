@@ -1,7 +1,7 @@
 import sys
 
-import amtrakwebscraper
-import email
+import Notifier
+import StatusMonitor
 
 
 if __name__ == '__main__':
@@ -15,4 +15,14 @@ if __name__ == '__main__':
     adminEmail = sys.argv[4]
     emails = sys.argv[5:]
 
-    
+    try:
+        monitor = StatusMonitor.StatusMonitor()
+        monitor.run(trainNumber, station, delay, emails)
+    except Exception as error:
+        message = 'Amtrak Status notifier raised an exception: {}'.format(error)
+        # Save to file
+        with open('error.log', 'w') as f:
+            f.write(message)
+        # Send to admin
+        notifier = Notifier.Notifier()
+        notifier.notify('email', adminEmail, 'Error!', message)
