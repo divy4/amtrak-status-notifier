@@ -49,4 +49,4 @@ class Notifier:
     '''
 
     def __notifyemail(self, address, head, body):
-        SMTPClient.sendMessage(address, head, body)
+        self.__emailClient.sendMessage(address, head, body)
