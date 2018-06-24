@@ -21,9 +21,19 @@ class StatusMonitor:
         with open(BODY_TEMPLATE_FILENAME, 'r') as f:
             bodyTemplate = f.read()
         # TODO: change loop to stop
+        failures = 0
         while True:
             print('Scraping status at {}...'.format(datetime.datetime.now()))
             status = amtrakwebscraper.getStatus(True, trainNumber, stationCode, date)
+            if status is None:
+                failures += 1
+                if failures > 5:
+                    raise RuntimeError('Failed too many times!')
+                print('Unable to scrape status.')
+                print('Sleeping for 5 minutes...')
+                time.sleep(60 * 5)
+                print('Done!')
+                continue
             print('Scraping done!')
             # TODO: make function to format head and body
             head = headTemplate
