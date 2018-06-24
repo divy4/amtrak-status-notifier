@@ -13,6 +13,14 @@ class SMTPClient:
         @param userPassword The password to userAddress's account.
     '''
     def __init__(self, serverAddress, serverPort, userAddress, userPassword):
+        if not isinstance(serverAddress, basestring):
+            raise TypeError('serverAddress must be a string.')
+        elif not isinstance(serverPort, int):
+            raise TypeError('serverPort must be an int.')
+        elif not isinstance(userAddress, basestring):
+            raise TypeError('userAddress must be a string.')
+        elif not isinstance(userPassword, basestring):
+            raise TypeError('userPassword must be a string.')
         self.__server = smtplib.SMTP(serverAddress, serverPort)
         self.__server.ehlo()
         self.__server.starttls()
@@ -25,6 +33,12 @@ class SMTPClient:
         @param body The text of the message.
     '''
     def sendMessage(self, toAddress, subject, body):
+        if not isinstance(toAddress, basestring):
+            raise TypeError('toAddress must be a string.')
+        elif not isinstance(subject, basestring):
+            raise TypeError('subject must be a string.')
+        elif not isinstance(body, basestring):
+            raise TypeError('body must be a string.')
         msg = email.mime.multipart.MIMEMultipart()
         msg['From'] = self.__from
         msg['To'] = toAddress
