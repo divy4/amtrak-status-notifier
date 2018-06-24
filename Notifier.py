@@ -15,5 +15,5 @@ class Notifier:
         @param head The head of the notification.
         @param body The body of the notification.
     '''
-    def notify(notifType, address, head, body):
+    def notify(self, notifType, address, head, body):
         pass
