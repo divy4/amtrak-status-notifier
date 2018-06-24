@@ -29,13 +29,13 @@ class Notifier:
                                                    emailInfo['userPassword'])
 
     ''' Notifies an address.
-        @param notifType The type of notification the address accepts.
+        @param method The method to use when notifying the address.
         @param address The address to notify.
         @param head The head of the notification.
         @param body The body of the notification.
     '''
-    def notify(self, notifType, address, head, body):
-        self.__notifierMethods[notifType](address, head, body)
+    def notify(self, method, address, head, body):
+        self.__notifierMethods[method](address, head, body)
 
     ''' ##### Helper functions:
         These functions are called by notify() to send notifications
