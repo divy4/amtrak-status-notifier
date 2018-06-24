@@ -47,6 +47,7 @@ class SMTPClient:
         self.__server.send_message(msg)
 
 if __name__ == '__main__':
+    print('Running integration test...')
     serverAddress = input('Server address: ')
     serverPort = int(input('Server port: '))
     userAddress = input('From address: ')
