@@ -1,3 +1,5 @@
+import datetime
+
 import amtrakwebscraper
 import Notifier
 
@@ -8,4 +10,4 @@ class StatusMonitor:
         pass
 
     def run(self, trainNumber, station, delay, emails):
-        pass
+        pass            
