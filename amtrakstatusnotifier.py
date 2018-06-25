@@ -12,12 +12,12 @@ if __name__ == '__main__':
     trainNumber = int(sys.argv[1])
     station = sys.argv[2]
     delay = int(sys.argv[3])
-    adminEmail = sys.argv[4]
-    emails = sys.argv[5:]
+    adminAddress = sys.argv[4]
+    addresses = sys.argv[5:]
     # Monitor
     try:
         monitor = StatusMonitor.StatusMonitor()
-        monitor.run(trainNumber, station, delay, emails)
+        monitor.run(trainNumber, station, delay, addresses)
     except Exception as error:
         message = 'Amtrak Status notifier raised an exception: {}'.format(error)
         # Save to file
@@ -25,4 +25,9 @@ if __name__ == '__main__':
             f.write(message)
         # Send to admin
         notifier = Notifier.Notifier()
-        notifier.notify('email', adminEmail, 'Error!', message)
+        try:
+            int(adminAddress)
+            method = 'text'
+        except ValueError:
+            method = 'email'
+        notifier.notify(method, adminAddress, 'Error!', message)

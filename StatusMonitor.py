@@ -13,7 +13,7 @@ class StatusMonitor:
     def __init__(self):
         pass
 
-    def run(self, trainNumber, station, delay, emails):
+    def run(self, trainNumber, station, delay, addresses):
         date = datetime.datetime.now()
         stationCode, stationName = amtrakwebscraper.getStationInfo(station)
         # email templates
@@ -44,12 +44,17 @@ class StatusMonitor:
                                        stationCode=stationCode,
                                        stationName=stationName,
                                        trainNumber=trainNumber)
-            # notify emails!
-            print('Sending emails at {}...'.format(datetime.datetime.now()))
+            # notify addresses!
+            print('Sending notifications at {}...'.format(datetime.datetime.now()))
             notifier = Notifier.Notifier()
-            for email in emails:
-                notifier.notify('email', email, head, body)
-            print('{} emails sent!'.format(len(emails)))
+            for address in addresses:
+                try:
+                    int(address)
+                    method = 'text'
+                except ValueError:
+                    method = 'email'
+                notifier.notify(method, address, head, body)
+            print('{} notifications sent!'.format(len(addresses)))
             # wait for <delay> minutes
             print('Sleeping for {} minutes...'.format(delay))
             time.sleep(60 * delay)
