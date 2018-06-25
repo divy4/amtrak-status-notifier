@@ -50,3 +50,6 @@ class Notifier:
 
     def __notifyemail(self, address, head, body):
         self.__emailClient.sendMessage(address, head, body)
+
+    def __notifytext(self, address, head, body):
+        self.notify('email', '{}@txt.att.net'.format(address), head, body)
