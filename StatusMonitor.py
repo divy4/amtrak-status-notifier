@@ -50,9 +50,9 @@ class StatusMonitor:
             for address in addresses:
                 try:
                     int(address)
-                    method = 'email'
-                except ValueError:
                     method = 'text'
+                except ValueError:
+                    method = 'email'
                 notifier.notify(method, address, head, body)
             print('{} notifications sent!'.format(len(addresses)))
             # wait for <delay> minutes
