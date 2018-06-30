@@ -39,26 +39,34 @@ class StatusMonitor:
         notifier.notifyMany(None, addresses, head, body)
         print('{} notifications sent!'.format(len(addresses)))
 
-    def __waitForNextNotification(self, delay):
-            print('Sleeping for {} minutes...'.format(delay))
-            time.sleep(60 * delay)
+    def __waitForNextNotification(self, delay, expectedTime):
+            print('Sleeping for {} minutes...'.format(delay.minutes))
+            time.sleep(delay.seconds)
             print('Done!')
 
     def run(self, trainNumber, station, delay, addresses):
+        delay = datetime.timedelta(minutes=delay)
         date = datetime.datetime.now()
         stationCode, stationName, timeZone = amtrakwebscraper.getStationInfo(station)
         # email templates
         headTemplate = 'Amtrak Status'
         with open(BODY_TEMPLATE_FILENAME, 'r') as f:
             bodyTemplate = f.read()
-        # TODO: change loop to stop
-        failures = 0
-        while True:
+        expectedTime = datetime.datetime.now() + delay
+        while expectedTime + delay / 2 > datetime.datetime.now():
             status = self.__getStatus(True, trainNumber, station, date)
             status['stationCode'] = stationCode
             status['stationName'] = stationName
             status['trainNumber'] = trainNumber
+            expectedTime = status['expectedTime']
             head = self.__formatTemplate(headTemplate, **status)
             body = self.__formatTemplate(bodyTemplate, **status)
             self.__notify(addresses, head, body)
-            self.__waitForNextNotification(delay)
+            self.__waitForNextNotification(delay, status['expectedTime'])
+        status = self.__getStatus(True, trainNumber, station, date)
+        status['stationCode'] = stationCode
+        status['stationName'] = stationName
+        status['trainNumber'] = trainNumber
+        head = self.__formatTemplate(headTemplate, **status)
+        body = self.__formatTemplate(bodyTemplate, **status)
+        self.__notify(addresses, head, body)
