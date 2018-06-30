@@ -30,12 +30,33 @@ class Notifier:
 
     ''' Notifies an address.
         @param method The method to use when notifying the address.
+            If null, notify() tries to determine which method to use.
         @param address The address to notify.
         @param head The head of the notification.
         @param body The body of the notification.
     '''
     def notify(self, method, address, head, body):
+        if method is None:
+            try:
+                int(address)
+                method = 'text'
+            except ValueError:
+                method = 'email'
         self.__notifierMethods[method](address, head, body)
+
+    ''' Notifies multiple addresses.
+        @param methods The methods to use when notifying the address.
+            If None or a string, that method is applied to every address.
+            If a list, each item in the list is applied to its corresponding address.
+        @param addressss The addresses to notify.
+        @param head The head of the notification.
+        @param body The body of the notification.
+    '''
+    def notifyMany(self, methods, addresses, head, body):
+        if methods is None or isinstance(methods, str):
+            methods = [methods] * len(addresses)
+        for method, address in zip(methods, addresses):
+            self.notify(method, address, head, body)
 
     ''' ##### Helper functions:
         These functions are called by notify() to send notifications
