@@ -40,7 +40,7 @@ class StatusMonitor:
         print('{} notifications sent!'.format(len(addresses)))
 
     def __waitForNextNotification(self, delay, expectedTime):
-            print('Sleeping for {} minutes...'.format(delay.minutes))
+            print('Sleeping for {} minutes...'.format(delay.seconds // 60))
             time.sleep(delay.seconds)
             print('Done!')
 
