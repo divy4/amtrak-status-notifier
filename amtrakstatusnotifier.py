@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 import Notifier
 import StatusMonitor
@@ -18,15 +19,13 @@ if __name__ == '__main__':
         monitor = StatusMonitor.StatusMonitor()
         monitor.run(trainNumber, station, addresses)
     except Exception as error:
-        message = 'Amtrak Status notifier raised an exception: {}'.format(error)
+        traceback = traceback.TracebackException(type(error), error, error.__traceback__)
+        message = 'Amtrak Status notifier raised an exception: {}\n\n{}'.format(
+                error,
+                ''.join(traceback.format()))
         # Save to file
         with open('error.log', 'w') as f:
             f.write(message)
         # Send to admin
         notifier = Notifier.Notifier()
-        try:
-            int(adminAddress)
-            method = 'text'
-        except ValueError:
-            method = 'email'
-        notifier.notify(method, adminAddress, 'Error!', message)
+        notifier.notify(None, adminAddress, 'Error!', message)
