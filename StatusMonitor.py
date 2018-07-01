@@ -4,10 +4,11 @@ import time
 import amtrakwebscraper
 import Notifier
 
-
+HEAD_TEMPLATE_FILENAME = 'teaplates/statusHead.txt'
 BODY_TEMPLATE_FILENAME = 'templates/statusBody.txt'
+
 CONFIRM_TIME = datetime.timedelta(minutes=10)
-MIN_WAIT = datetime.timedelta(minutes=1)
+MIN_WAIT = datetime.timedelta(minutes=5)
 TIME_FORMAT = ''
 
 
@@ -52,23 +53,18 @@ class StatusMonitor:
         date = datetime.datetime.now()
         stationCode, stationName, timeZone = amtrakwebscraper.getStationInfo(station)
         # email templates
-        headTemplate = 'Amtrak Status'
+        with open(HEAD_TEMPLATE_FILENAME, 'r') as f:
+            headTemplate = f.read()
         with open(BODY_TEMPLATE_FILENAME, 'r') as f:
             bodyTemplate = f.read()
         status = {'expectedTime': datetime.datetime.max - CONFIRM_TIME}
         while status['expectedTime'] + CONFIRM_TIME > datetime.datetime.now():
             status = self.__getStatus(True, trainNumber, station, date)
-            status['stationCode'] = stationCode
-            status['stationName'] = stationName
-            status['trainNumber'] = trainNumber
             head = self.__formatTemplate(headTemplate, **status)
             body = self.__formatTemplate(bodyTemplate, **status)
             self.__notify(addresses, head, body)
             self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
         status = self.__getStatus(True, trainNumber, station, date)
-        status['stationCode'] = stationCode
-        status['stationName'] = stationName
-        status['trainNumber'] = trainNumber
         head = self.__formatTemplate(headTemplate, **status)
         body = self.__formatTemplate(bodyTemplate, **status)
         self.__notify(addresses, head, body)
