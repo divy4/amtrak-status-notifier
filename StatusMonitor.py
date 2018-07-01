@@ -4,7 +4,7 @@ import time
 import amtrakwebscraper
 import Notifier
 
-HEAD_TEMPLATE_FILENAME = 'teaplates/statusHead.txt'
+HEAD_TEMPLATE_FILENAME = 'templates/statusHead.txt'
 BODY_TEMPLATE_FILENAME = 'templates/statusBody.txt'
 
 CONFIRM_TIME = datetime.timedelta(minutes=10)
@@ -45,11 +45,12 @@ class StatusMonitor:
         print('{} notifications sent!'.format(len(addresses)))
 
     def __waitForNextNotification(self, expectedTime, minWait):
-            diff = expectedTime - datetime.datetime.now()
-            delay = max(diff * 0.5, minWait)
-            print('Sleeping for {} minutes, {} seconds...'.format(delay.seconds // 60, delay.seconds % 60))
-            time.sleep(delay.seconds)
-            print('Done!')
+        diff = expectedTime - datetime.datetime.now()
+        delay = max(diff * 0.5, minWait)
+        print('Sleeping for {} minutes, {} seconds...'.format(delay.seconds // 60,
+                                                              delay.seconds % 60))
+        time.sleep(delay.seconds)
+        print('Done!')
 
     def run(self, trainNumber, station, addresses):
         date = datetime.datetime.now()
@@ -64,5 +65,5 @@ class StatusMonitor:
         while status['expectedTime'] + CONFIRM_TIME > datetime.datetime.now():           
             self.__notify(addresses, headTemplate, bodyTemplate, status)
             self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
-            status = self.__getStatus(True, trainNumber, station, date)            
+            status = self.__getStatus(True, trainNumber, station, date)
         self.__notify(addresses, headTemplate, bodyTemplate, status)
