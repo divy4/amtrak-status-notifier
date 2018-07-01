@@ -36,22 +36,10 @@ class StatusMonitor:
         print('Scraping done!')
         return status
 
-    def __formatTemplate(self, template, **kwargs):
-        return template.format(**kwargs)
-
     def __notify(self, addresses, headTemplate, bodyTemplate, status):
         print('Sending notifications at {}...'.format(self.__now()))
-        # format templates
-        formattedStatus = {}
-        for key, value in status.items():
-            if isinstance(value, datetime.datetime):
-                formattedStatus[key] = value.strftime(TIME_FORMAT)
-            else:
-                formattedStatus[key] = value
-        head = self.__formatTemplate(headTemplate, **formattedStatus)
-        body = self.__formatTemplate(bodyTemplate, **formattedStatus)
         notifier = Notifier.Notifier()
-        notifier.notifyMany(None, addresses, head, body)
+        notifier.notifyMany(None, addresses, headTemplate, bodyTemplate, **status)
         print('{} notifications sent!'.format(len(addresses)))
 
     def __waitForNextNotification(self, expectedTime, minWait):
