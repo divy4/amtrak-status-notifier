@@ -36,8 +36,10 @@ class StatusMonitor:
     def __formatTemplate(self, template, **kwargs):
         return template.format(**kwargs)
 
-    def __notify(self, addresses, head, body):
+    def __notify(self, addresses, headTemplate, bodyTemplate, status):
         print('Sending notifications at {}...'.format(datetime.datetime.now()))
+        head = self.__formatTemplate(headTemplate, **status)
+        body = self.__formatTemplate(bodyTemplate, **status)
         notifier = Notifier.Notifier()
         notifier.notifyMany(None, addresses, head, body)
         print('{} notifications sent!'.format(len(addresses)))
@@ -57,14 +59,10 @@ class StatusMonitor:
             headTemplate = f.read()
         with open(BODY_TEMPLATE_FILENAME, 'r') as f:
             bodyTemplate = f.read()
-        status = {'expectedTime': datetime.datetime.max - CONFIRM_TIME}
-        while status['expectedTime'] + CONFIRM_TIME > datetime.datetime.now():
-            status = self.__getStatus(True, trainNumber, station, date)
-            head = self.__formatTemplate(headTemplate, **status)
-            body = self.__formatTemplate(bodyTemplate, **status)
-            self.__notify(addresses, head, body)
-            self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
+        # loop!
         status = self.__getStatus(True, trainNumber, station, date)
-        head = self.__formatTemplate(headTemplate, **status)
-        body = self.__formatTemplate(bodyTemplate, **status)
-        self.__notify(addresses, head, body)
+        while status['expectedTime'] + CONFIRM_TIME > datetime.datetime.now():           
+            self.__notify(addresses, headTemplate, bodyTemplate, status)
+            self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
+            status = self.__getStatus(True, trainNumber, station, date)            
+        self.__notify(addresses, headTemplate, bodyTemplate, status)
