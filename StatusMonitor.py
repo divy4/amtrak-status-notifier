@@ -9,7 +9,7 @@ BODY_TEMPLATE_FILENAME = 'templates/statusBody.txt'
 
 CONFIRM_TIME = datetime.timedelta(minutes=10)
 MIN_WAIT = datetime.timedelta(minutes=5)
-TIME_FORMAT = ''
+TIME_FORMAT = '%I:%M %p %Z'
 
 
 class StatusMonitor:
@@ -17,8 +17,11 @@ class StatusMonitor:
     def __init__(self):
         pass
 
+    def __now(self):
+        return datetime.datetime.now(datetime.timezone.utc)
+
     def __getStatus(self, arrival, trainNumber, station, date):
-        print('Scraping status at {}...'.format(datetime.datetime.now()))
+        print('Scraping status at {}...'.format(self.__now()))
         failures = 0
         status = None
         while not status and failures < 5:
@@ -37,15 +40,22 @@ class StatusMonitor:
         return template.format(**kwargs)
 
     def __notify(self, addresses, headTemplate, bodyTemplate, status):
-        print('Sending notifications at {}...'.format(datetime.datetime.now()))
-        head = self.__formatTemplate(headTemplate, **status)
-        body = self.__formatTemplate(bodyTemplate, **status)
+        print('Sending notifications at {}...'.format(self.__now()))
+        # format templates
+        formattedStatus = {}
+        for key, value in status.items():
+            if isinstance(value, datetime.datetime):
+                formattedStatus[key] = value.strftime(TIME_FORMAT)
+            else:
+                formattedStatus[key] = value
+        head = self.__formatTemplate(headTemplate, **formattedStatus)
+        body = self.__formatTemplate(bodyTemplate, **formattedStatus)
         notifier = Notifier.Notifier()
         notifier.notifyMany(None, addresses, head, body)
         print('{} notifications sent!'.format(len(addresses)))
 
     def __waitForNextNotification(self, expectedTime, minWait):
-        diff = expectedTime - datetime.datetime.now()
+        diff = expectedTime - self.__now()
         delay = max(diff * 0.5, minWait)
         print('Sleeping for {} minutes, {} seconds...'.format(delay.seconds // 60,
                                                               delay.seconds % 60))
@@ -53,7 +63,7 @@ class StatusMonitor:
         print('Done!')
 
     def run(self, trainNumber, station, addresses):
-        date = datetime.datetime.now()
+        date = self.__now()
         stationCode, stationName, timeZone = amtrakwebscraper.getStationInfo(station)
         # email templates
         with open(HEAD_TEMPLATE_FILENAME, 'r') as f:
@@ -62,7 +72,7 @@ class StatusMonitor:
             bodyTemplate = f.read()
         # loop!
         status = self.__getStatus(True, trainNumber, station, date)
-        while status['expectedTime'] + CONFIRM_TIME > datetime.datetime.now():           
+        while status['expectedTime'] + CONFIRM_TIME > self.__now():           
             self.__notify(addresses, headTemplate, bodyTemplate, status)
             self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
             status = self.__getStatus(True, trainNumber, station, date)
