@@ -6,6 +6,8 @@ import Notifier
 
 
 BODY_TEMPLATE_FILENAME = 'templates/statusBody.txt'
+CONFIRM_TIME = datetime.timedelta(minutes=10)
+MIN_WAIT = datetime.timedelta(minutes=1)
 TIME_FORMAT = ''
 
 
@@ -39,30 +41,30 @@ class StatusMonitor:
         notifier.notifyMany(None, addresses, head, body)
         print('{} notifications sent!'.format(len(addresses)))
 
-    def __waitForNextNotification(self, delay, expectedTime):
-            print('Sleeping for {} minutes...'.format(delay.seconds // 60))
+    def __waitForNextNotification(self, expectedTime, minWait):
+            diff = expectedTime - datetime.datetime.now()
+            delay = max(diff * 0.5, minWait)
+            print('Sleeping for {} minutes, {} seconds...'.format(delay.seconds // 60, delay.seconds % 60))
             time.sleep(delay.seconds)
             print('Done!')
 
-    def run(self, trainNumber, station, delay, addresses):
-        delay = datetime.timedelta(minutes=delay)
+    def run(self, trainNumber, station, addresses):
         date = datetime.datetime.now()
         stationCode, stationName, timeZone = amtrakwebscraper.getStationInfo(station)
         # email templates
         headTemplate = 'Amtrak Status'
         with open(BODY_TEMPLATE_FILENAME, 'r') as f:
             bodyTemplate = f.read()
-        expectedTime = datetime.datetime.now() + delay
-        while expectedTime + delay / 2 > datetime.datetime.now():
+        status = {'expectedTime': datetime.datetime.max - CONFIRM_TIME}
+        while status['expectedTime'] + CONFIRM_TIME > datetime.datetime.now():
             status = self.__getStatus(True, trainNumber, station, date)
             status['stationCode'] = stationCode
             status['stationName'] = stationName
             status['trainNumber'] = trainNumber
-            expectedTime = status['expectedTime']
             head = self.__formatTemplate(headTemplate, **status)
             body = self.__formatTemplate(bodyTemplate, **status)
             self.__notify(addresses, head, body)
-            self.__waitForNextNotification(delay, status['expectedTime'])
+            self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
         status = self.__getStatus(True, trainNumber, station, date)
         status['stationCode'] = stationCode
         status['stationName'] = stationName
