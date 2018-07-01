@@ -1,1 +1,1 @@
-Train {trainNumber} is expected to arrive at {stationName} {stationCode} at {expectedTime}.
+Train {trainNumber} is expected to arrive at {stationLocation} ({stationCode}) at {expectedTime}.
