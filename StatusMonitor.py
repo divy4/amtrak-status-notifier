@@ -27,7 +27,7 @@ class StatusMonitor:
         while not status and failures < 5:
             try:
                 status = amtrakwebscraper.getStatus(arrival, trainNumber, station, date)
-            except StandardError as error:
+            except Exception as error:
                 failures += 1
                 print('Unable to scrape status: {}'.format(error))
                 time.sleep(1)
