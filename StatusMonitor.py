@@ -1,4 +1,5 @@
 import datetime
+import pytz
 import time
 
 import amtrakwebscraper
@@ -9,8 +10,6 @@ BODY_TEMPLATE_FILENAME = 'templates/statusBody.txt'
 
 CONFIRM_TIME = datetime.timedelta(minutes=10)
 MIN_WAIT = datetime.timedelta(minutes=5)
-TIME_FORMAT = '%I:%M %p %Z'
-
 
 class StatusMonitor:
     
@@ -18,7 +17,7 @@ class StatusMonitor:
         pass
 
     def __now(self):
-        return datetime.datetime.now(datetime.timezone.utc)
+        return pytz.utc.localize(datetime.datetime.utcnow())
 
     def __getStatus(self, arrival, trainNumber, station, date):
         print('Scraping status at {}...'.format(self.__now()))
@@ -31,7 +30,7 @@ class StatusMonitor:
                 failures += 1
                 print('Unable to scrape status: {}'.format(error))
                 time.sleep(1)
-        if failures > 5:
+        if not status:
             raise RuntimeError('Failed to scrape status too many times!')
         print('Scraping done!')
         return status
