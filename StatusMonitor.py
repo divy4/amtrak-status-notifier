@@ -1,56 +1,66 @@
 import datetime
+import pytz
 import time
 
 import amtrakwebscraper
 import Notifier
 
-
+HEAD_TEMPLATE_FILENAME = 'templates/statusHead.txt'
 BODY_TEMPLATE_FILENAME = 'templates/statusBody.txt'
 
+CONFIRM_TIME = datetime.timedelta(minutes=10)
+MIN_WAIT = datetime.timedelta(minutes=5)
 
 class StatusMonitor:
     
     def __init__(self):
         pass
 
-    def run(self, trainNumber, station, delay, emails):
-        date = datetime.datetime.now()
-        stationCode, stationName = amtrakwebscraper.getStationInfo(station)
+    def __now(self):
+        return pytz.utc.localize(datetime.datetime.utcnow())
+
+    def __getStatus(self, arrival, trainNumber, station, date):
+        print('Scraping status at {}...'.format(self.__now()))
+        failures = 0
+        status = None
+        while not status and failures < 5:
+            try:
+                status = amtrakwebscraper.getStatus(arrival, trainNumber, station, date)
+            except Exception as error:
+                failures += 1
+                print('Unable to scrape status: {}'.format(error))
+                time.sleep(1)
+        if not status:
+            raise RuntimeError('Failed to scrape status too many times!')
+        print('Scraping done!')
+        return status
+
+    def __notify(self, addresses, headTemplate, bodyTemplate, status):
+        print('Sending notifications at {}...'.format(self.__now()))
+        notifier = Notifier.Notifier()
+        notifier.notifyMany(None, addresses, headTemplate, bodyTemplate, **status)
+        print('{} notifications sent!'.format(len(addresses)))
+
+    def __waitForNextNotification(self, expectedTime, minWait):
+        diff = expectedTime - self.__now()
+        delay = max(diff * 0.5, minWait)
+        print('Sleeping for {} minutes, {} seconds...'.format(delay.seconds // 60,
+                                                              delay.seconds % 60))
+        time.sleep(delay.seconds)
+        print('Done!')
+
+    def run(self, trainNumber, station, addresses):
+        date = self.__now()
+        stationCode, stationName, timeZone = amtrakwebscraper.getStationInfo(station)
         # email templates
-        headTemplate = 'Amtrak Status'
+        with open(HEAD_TEMPLATE_FILENAME, 'r') as f:
+            headTemplate = f.read()
         with open(BODY_TEMPLATE_FILENAME, 'r') as f:
             bodyTemplate = f.read()
-        # TODO: change loop to stop
-        failures = 0
-        while True:
-            print('Scraping status at {}...'.format(datetime.datetime.now()))
-            status = amtrakwebscraper.getStatus(True, trainNumber, stationCode, date)
-            if status is None:
-                failures += 1
-                if failures > 5:
-                    raise RuntimeError('Failed too many times!')
-                print('Unable to scrape status.')
-                print('Sleeping for 5 minutes...')
-                time.sleep(60 * 5)
-                print('Done!')
-                continue
-            print('Scraping done!')
-            # TODO: make function to format head and body
-            head = headTemplate
-            body = bodyTemplate.format(difference=status['difference'],
-                                       expectedTime=status['expectedTime'],
-                                       scheduledTime=status['scheduledTime'],
-                                       station=station,
-                                       stationCode=stationCode,
-                                       stationName=stationName,
-                                       trainNumber=trainNumber)
-            # notify emails!
-            print('Sending emails at {}...'.format(datetime.datetime.now()))
-            notifier = Notifier.Notifier()
-            for email in emails:
-                notifier.notify('email', email, head, body)
-            print('{} emails sent!'.format(len(emails)))
-            # wait for <delay> minutes
-            print('Sleeping for {} minutes...'.format(delay))
-            time.sleep(60 * delay)
-            print('Done!')
+        # loop!
+        status = self.__getStatus(True, trainNumber, station, date)
+        while status['expectedTime'] + CONFIRM_TIME > self.__now():           
+            self.__notify(addresses, headTemplate, bodyTemplate, status)
+            self.__waitForNextNotification(status['expectedTime'], MIN_WAIT)
+            status = self.__getStatus(True, trainNumber, station, date)
+        self.__notify(addresses, headTemplate, bodyTemplate, status)
